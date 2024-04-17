@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ohio's Portfolio</title>
+  <style>
+    /* CSS for basic animation */
+    @keyframes slideIn {
+      0% { opacity: 0; transform: translateY(-50px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .animated {
+      animation: slideIn 1s ease-out;
+    }
+
+    /* Basic styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+
+    header {
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    section {
+      padding: 20px;
+      background-color: #fff; /* Set section background color */
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: #333; /* Set heading color */
+    }
+
+    .project {
+      margin-bottom: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background-color: #f9f9f9; /* Set project background color */
+    }
+
+    .review {
+      background-color: #f9f9f9;
+      padding: 20px;
+      border-radius: 5px;
+    }
+
+    /* Add animation for projects and reviews */
+    .project, .review {
+      animation: slideIn 1s ease-out;
+    }
+
+    /* Style for the profile image */
+    #profile-img {
+      display: block;
+      margin: 0 auto 20px; /* Add space below the image */
+      border-radius: 50%; /* Make the image round */
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3); /* Add shadow effect */
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ohio's Portfolio</h1>
+  </header>
+
+  <!-- Add the profile image -->
+  <img id="profile-img" src="https://myterraformprojectwebsite2025.s3.us-east-2.amazonaws.com/profile.png" alt="Profile Picture">
+
+  <section id="portfolio" class="animated">
+    <div class="container">
+      <h2>Portfolio</h2>
+      <p>Welcome to my portfolio website. Here you can find information about my projects and skills.</p>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="container">
+      <h2>Projects</h2>
+      <div class="project animated">
+        <h3>Project 1: Using Terraform and AWS Cloud to set up static website hosting fully automated in just 3 seconds.</h3>
+        <p>In this Realtime DevOps project we will be using Terraform and AWS Cloud to set up static website hosting fully automated in just 3 seconds.
+            This Terraform project will help beginners understand the concept and working of terraform with AWS and how you can create one click automated solution using Terraform in devops.</p>
+      </div>
+      <div class="project animated">
+        <h3>Project 2: Another Project</h3>
+        <p>Description of another project. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+      </div>
+      <!-- Add more projects as needed -->
+    </div>
+  </section>
+
+  <section id="review" class="animated">
+    <div class="container">
+      <h2>Reviews</h2>
+      <div class="review">
+        <h3>Client Testimonial</h3>
+        <p>"Ohio's work is exceptional. They delivered results beyond our expectations. Highly recommended!"</p>
+        <p>- John Doe, CEO of Example Company</p>
+      </div>
+    </div>
+  </section>
+</body>
+</html>
