@@ -1,67 +1,141 @@
-#Create s3 Bucket
-resource "aws_s3_bucket" "mybucket" {
-  bucket = var.bucketname
-  }
+resource "aws_s3_bucket" "site" {
+  bucket = var.bucket_name
 
-  resource "aws_s3_bucket_ownership_controls" "example" {
-  bucket = aws_s3_bucket.mybucket.id
+  tags = {
+    Project   = "DevOps Portfolio Static Site"
+    ManagedBy = "Terraform"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "site" {
+  bucket = aws_s3_bucket.site.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "site" {
+  bucket = aws_s3_bucket.site.id
 
   rule {
-    object_ownership = "BucketOwnerPreferred"
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "example" {
-  bucket = aws_s3_bucket.mybucket.id
+resource "aws_s3_bucket_versioning" "site" {
+  bucket = aws_s3_bucket.site.id
 
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-resource "aws_s3_bucket_acl" "example" {
-  depends_on = [
-    aws_s3_bucket_ownership_controls.example,
-    aws_s3_bucket_public_access_block.example,
-    ]
-
-  bucket = aws_s3_bucket.mybucket.id
-  acl    = "public-read"
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 resource "aws_s3_object" "index" {
-  bucket = aws_s3_bucket.mybucket.id
-  key = "index.html"
-  source = "index.html"
-  acl = "public-read"
+  bucket       = aws_s3_bucket.site.id
+  key          = "index.html"
+  source       = "index.html"
   content_type = "text/html"
+  etag         = filemd5("index.html")
 }
 
 resource "aws_s3_object" "error" {
-  bucket = aws_s3_bucket.mybucket.id
-  key = "error.html"
-  source = "error.html"
-  acl = "public-read"
+  bucket       = aws_s3_bucket.site.id
+  key          = "error.html"
+  source       = "error.html"
   content_type = "text/html"
+  etag         = filemd5("error.html")
 }
 
-resource "aws_s3_object" "profile" {
-  bucket = aws_s3_bucket.mybucket.id
-  key = "profile.png"
-  source = "profile.png"
-  acl = "public-read"
+resource "aws_cloudfront_origin_access_control" "site" {
+  name                              = "${var.bucket_name}-oac"
+  description                       = "Origin Access Control for private S3 portfolio site"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
 
-resource "aws_s3_bucket_website_configuration" "website" {
-  bucket = aws_s3_bucket.mybucket.id
-  index_document {
-    suffix = "index.html"
+resource "aws_cloudfront_distribution" "site" {
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+  price_class         = "PriceClass_100"
+
+  origin {
+    domain_name              = aws_s3_bucket.site.bucket_regional_domain_name
+    origin_id                = "s3-${aws_s3_bucket.site.id}"
+    origin_access_control_id = aws_cloudfront_origin_access_control.site.id
   }
 
-  error_document {
-    key = "error.html"
+  default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "s3-${aws_s3_bucket.site.id}"
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
   }
 
-  depends_on = [ aws_s3_bucket_acl.example ]
+  custom_error_response {
+    error_code            = 403
+    response_code         = 404
+    response_page_path    = "/error.html"
+    error_caching_min_ttl = 60
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  tags = {
+    Project   = "DevOps Portfolio Static Site"
+    ManagedBy = "Terraform"
+  }
+}
+
+data "aws_iam_policy_document" "site_bucket" {
+  statement {
+    sid     = "AllowCloudFrontReadOnly"
+    actions = ["s3:GetObject"]
+    resources = [
+      "${aws_s3_bucket.site.arn}/*"
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.site.arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "site" {
+  bucket = aws_s3_bucket.site.id
+  policy = data.aws_iam_policy_document.site_bucket.json
+
+  depends_on = [aws_s3_bucket_public_access_block.site]
 }
